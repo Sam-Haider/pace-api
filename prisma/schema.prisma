@@ -19,7 +19,8 @@ model User {
   email     String   @unique
   firstName      String
   lastName      String
-  password  String
+  password  String?
+  googleId  String?  @unique
   weeklyGoalHours Int @default(2)
   createdAt DateTime @default(now())
 }

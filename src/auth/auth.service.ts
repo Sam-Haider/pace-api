@@ -28,8 +28,8 @@ export class AuthService {
   async createUser(userData: {
     email: string;
     password: string;
-    firstName?: string;
-    lastName?: string;
+    firstName: string;
+    lastName: string;
     weeklyGoalHours?: number;
   }) {
     const existingUser = await this.findUserByEmail(userData.email);
@@ -47,6 +47,50 @@ export class AuthService {
         lastName: userData.lastName,
         weeklyGoalHours: userData.weeklyGoalHours || 2,
       },
+    });
+  }
+
+  async findOrCreateGoogleUser(googleProfile: {
+    googleId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  }) {
+    // First, try to find by Google ID
+    let user = await this.prisma.user.findUnique({
+      where: { googleId: googleProfile.googleId },
+    });
+
+    if (user) {
+      return user;
+    }
+
+    // If not found by Google ID, try by email
+    user = await this.findUserByEmail(googleProfile.email);
+
+    if (user) {
+      // User exists with this email but no Google ID, link the accounts
+      return this.prisma.user.update({
+        where: { id: user.id },
+        data: { googleId: googleProfile.googleId },
+      });
+    }
+
+    // Create new user with Google data
+    return this.prisma.user.create({
+      data: {
+        email: googleProfile.email,
+        googleId: googleProfile.googleId,
+        firstName: googleProfile.firstName,
+        lastName: googleProfile.lastName,
+        weeklyGoalHours: 2,
+      },
+    });
+  }
+
+  async findUserByGoogleId(googleId: string) {
+    return this.prisma.user.findUnique({
+      where: { googleId },
     });
   }
 
