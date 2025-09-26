@@ -110,9 +110,16 @@ export class AuthController {
     const user = req.user;
     const token = this.authService.generateToken(user.id, user.email);
 
-    // For development, redirect to a success page with token in query params
-    // In production, you'd want to redirect to your frontend with the token
-    res.redirect(`http://localhost:3000/auth/success?token=${token}`);
+    // Set secure cookie
+    res.cookie('auth-token', token, {
+      httpOnly: false,         // Allow JavaScript access for client-side middleware
+      secure: false,           // Set to true in production (HTTPS)
+      sameSite: 'lax',        // CSRF protection (lax for cross-origin redirects)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Redirect to frontend dashboard
+    res.redirect('http://localhost:3001/dashboard');
   }
 
   @Get('success')
