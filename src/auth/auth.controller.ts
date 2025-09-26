@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { Response } from 'express';
 
 @Controller('auth')
@@ -108,7 +109,7 @@ export class AuthController {
   async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
     const user = req.user;
     const token = this.authService.generateToken(user.id, user.email);
-    
+
     // For development, redirect to a success page with token in query params
     // In production, you'd want to redirect to your frontend with the token
     res.redirect(`http://localhost:3000/auth/success?token=${token}`);
@@ -116,9 +117,29 @@ export class AuthController {
 
   @Get('success')
   authSuccess() {
-    return { 
+    return {
       message: 'Google OAuth successful!',
-      instructions: 'In a real app, this would redirect to your frontend with the JWT token.'
+      instructions:
+        'In a real app, this would redirect to your frontend with the JWT token.',
+    };
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: any) {
+    const user = await this.authService.findUserByEmail(req.user.email);
+    
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      weeklyGoalHours: user.weeklyGoalHours,
+      createdAt: user.createdAt,
     };
   }
 }
