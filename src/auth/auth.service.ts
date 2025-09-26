@@ -102,4 +102,12 @@ export class AuthService {
   verifyToken(token: string) {
     return this.jwtService.verify(token);
   }
+
+  async updatePassword(userId: number, newPassword: string) {
+    const hashedPassword = await this.hashPassword(newPassword);
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+  }
 }
