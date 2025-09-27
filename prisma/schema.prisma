@@ -15,12 +15,112 @@ datasource db {
 }
 
 model User {
+  id              Int                @id @default(autoincrement())
+  email           String             @unique
+  firstName       String
+  lastName        String
+  password        String?
+  googleId        String?            @unique
+  weeklyGoalHours Int                @default(2)
+  createdAt       DateTime           @default(now())
+  
+  // Relations
+  workoutSessions WorkoutSession[]
+  feelingLogEntries FeelingLogEntry[]
+
+  @@index([email])
+}
+
+enum MovementPattern {
+  horizontal_push
+  vertical_push
+  horizontal_pull
+  vertical_pull
+  squat
+  hinge
+  lunge
+  carry
+  rotation
+  core
+  cardio
+}
+
+enum Units {
+  reps
+  minutes
+  seconds
+  distance
+}
+
+model Exercise {
+  id              Int              @id @default(autoincrement())
+  name            String
+  description     String?
+  muscleGroups    String[]
+  movementPattern MovementPattern
+  equipment       String?
+  url             String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relations
+  completedExercises CompletedExercise[]
+
+  @@index([movementPattern])
+  @@index([muscleGroups])
+}
+
+model WorkoutSession {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  date        DateTime
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedExercises  CompletedExercise[]
+
+  @@index([userId])
+  @@index([date])
+  @@index([userId, date])
+}
+
+model CompletedExercise {
+  id              Int             @id @default(autoincrement())
+  workoutSessionId Int
+  exerciseId      Int
+  count           Int?
+  sets            Int?
+  units           Units?
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  workoutSession  WorkoutSession  @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise        Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+  @@index([workoutSessionId, exerciseId])
+}
+
+model FeelingLogEntry {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  firstName      String
-  lastName      String
-  password  String?
-  googleId  String?  @unique
-  weeklyGoalHours Int @default(2)
+  userId    Int
+  date      DateTime @db.Date
+  painLevel Int      @db.SmallInt
+  notes     String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
 }
