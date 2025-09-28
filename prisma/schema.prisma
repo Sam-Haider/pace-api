@@ -21,7 +21,6 @@ model User {
   lastName            String
   password            String?
   googleId            String?            @unique
-  weeklyGoalHours     Int                @default(2)
   onboardingCompleted Boolean            @default(false)
   createdAt           DateTime           @default(now())
   
