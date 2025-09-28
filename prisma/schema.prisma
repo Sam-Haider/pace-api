@@ -15,18 +15,20 @@ datasource db {
 }
 
 model User {
-  id              Int                @id @default(autoincrement())
-  email           String             @unique
-  firstName       String
-  lastName        String
-  password        String?
-  googleId        String?            @unique
-  weeklyGoalHours Int                @default(2)
-  createdAt       DateTime           @default(now())
+  id                  Int                @id @default(autoincrement())
+  email               String             @unique
+  firstName           String
+  lastName            String
+  password            String?
+  googleId            String?            @unique
+  weeklyGoalHours     Int                @default(2)
+  onboardingCompleted Boolean            @default(false)
+  createdAt           DateTime           @default(now())
   
   // Relations
-  workoutSessions WorkoutSession[]
-  feelingLogEntries FeelingLogEntry[]
+  workoutSessions     WorkoutSession[]
+  feelingLogEntries   FeelingLogEntry[]
+  userIdentities      UserIdentity[]
 
   @@index([email])
 }
@@ -52,22 +54,27 @@ enum Units {
   distance
 }
 
+enum WeightUnit {
+  lbs
+  kg
+  bodyweight
+}
+
 model Exercise {
   id              Int              @id @default(autoincrement())
   name            String
   description     String?
-  muscleGroups    String[]
   movementPattern MovementPattern
-  equipment       String?
   url             String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   
   // Relations
-  completedExercises CompletedExercise[]
+  completedExercises     CompletedExercise[]
+  exerciseMuscleGroups   ExerciseMuscleGroup[]
+  exerciseEquipment      ExerciseEquipment[]
 
   @@index([movementPattern])
-  @@index([muscleGroups])
 }
 
 model WorkoutSession {
@@ -92,9 +99,11 @@ model CompletedExercise {
   id              Int             @id @default(autoincrement())
   workoutSessionId Int
   exerciseId      Int
-  count           Int?
   sets            Int?
+  count           Int?
   units           Units?
+  weight          Float?
+  weightUnit      WeightUnit?     @default(lbs)
   notes           String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -123,4 +132,89 @@ model FeelingLogEntry {
   @@unique([userId, date])
   @@index([userId])
   @@index([date])
+}
+
+model Identity {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  category    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  userIdentities UserIdentity[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model UserIdentity {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  identityId Int
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identity Identity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, identityId])
+  @@index([userId])
+  @@index([identityId])
+}
+
+model Equipment {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  category  String?
+  createdAt DateTime @default(now())
+  
+  // Relations
+  exerciseEquipment ExerciseEquipment[]
+
+  @@index([category])
+}
+
+model ExerciseEquipment {
+  id          Int       @id @default(autoincrement())
+  exerciseId  Int
+  equipmentId Int
+  isRequired  Boolean   @default(false)
+  
+  // Relations
+  exercise    Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, equipmentId])
+  @@index([exerciseId])
+  @@index([equipmentId])
+}
+
+model MuscleGroup {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  category  String?
+  createdAt DateTime @default(now())
+  
+  // Relations
+  exerciseMuscleGroups ExerciseMuscleGroup[]
+
+  @@index([category])
+}
+
+model ExerciseMuscleGroup {
+  id            Int         @id @default(autoincrement())
+  exerciseId    Int
+  muscleGroupId Int
+  isPrimary     Boolean     @default(false)
+  
+  // Relations
+  exercise      Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  muscleGroup   MuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, muscleGroupId])
+  @@index([exerciseId])
+  @@index([muscleGroupId])
 }
