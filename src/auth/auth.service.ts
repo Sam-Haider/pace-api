@@ -30,7 +30,6 @@ export class AuthService {
     password: string;
     firstName: string;
     lastName: string;
-    weeklyGoalHours?: number;
   }) {
     const existingUser = await this.findUserByEmail(userData.email);
     if (existingUser) {
@@ -45,7 +44,6 @@ export class AuthService {
         password: hashedPassword,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        weeklyGoalHours: userData.weeklyGoalHours || 2,
       },
     });
   }
@@ -83,7 +81,6 @@ export class AuthService {
         googleId: googleProfile.googleId,
         firstName: googleProfile.firstName,
         lastName: googleProfile.lastName,
-        weeklyGoalHours: 2,
       },
     });
   }
@@ -109,5 +106,28 @@ export class AuthService {
       where: { id: userId },
       data: { password: hashedPassword },
     });
+  }
+
+  async completeOnboarding(userId: number, data: { firstName: string; lastName: string; identityId: number }) {
+    // Update user with onboarding data
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        onboardingCompleted: true,
+      },
+    });
+
+    // Create user identity relationship
+    await this.prisma.userIdentity.create({
+      data: {
+        userId: userId,
+        identityId: data.identityId,
+        isPrimary: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

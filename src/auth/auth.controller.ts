@@ -26,7 +26,6 @@ export class AuthController {
       password: string;
       firstName: string;
       lastName: string;
-      weeklyGoalHours?: number;
     },
   ) {
     if (!body.email || !body.password || !body.firstName || !body.lastName) {
@@ -51,7 +50,6 @@ export class AuthController {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        weeklyGoalHours: user.weeklyGoalHours,
         createdAt: user.createdAt,
       },
     };
@@ -92,7 +90,6 @@ export class AuthController {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        weeklyGoalHours: user.weeklyGoalHours,
         createdAt: user.createdAt,
       },
     };
@@ -145,7 +142,7 @@ export class AuthController {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      weeklyGoalHours: user.weeklyGoalHours,
+      onboardingCompleted: user.onboardingCompleted,
       createdAt: user.createdAt,
     };
   }
@@ -182,5 +179,30 @@ export class AuthController {
     await this.authService.updatePassword(user.id, body.newPassword);
 
     return { message: 'Password changed successfully' };
+  }
+
+  @Post('complete-onboarding')
+  @UseGuards(JwtAuthGuard)
+  async completeOnboarding(
+    @Req() req: any,
+    @Body() body: { firstName: string; lastName: string; identityId: number },
+  ) {
+    if (!body.firstName || !body.lastName || !body.identityId) {
+      throw new BadRequestException('First name, last name, and identity are required');
+    }
+
+    const user = await this.authService.findUserByEmail(req.user.email);
+    
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    await this.authService.completeOnboarding(user.id, {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      identityId: body.identityId,
+    });
+
+    return { message: 'Onboarding completed successfully' };
   }
 }
