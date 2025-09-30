@@ -158,6 +158,7 @@ model UserIdentity {
   // Relations
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   identity Identity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  votes    Vote[]
 
   @@unique([userId, identityId])
   @@index([userId])
@@ -216,4 +217,19 @@ model ExerciseMuscleGroup {
   @@unique([exerciseId, muscleGroupId])
   @@index([exerciseId])
   @@index([muscleGroupId])
+}
+
+model Vote {
+  id             Int          @id @default(autoincrement())
+  userIdentityId Int
+  date           DateTime     @db.Date
+  notes          String?
+  createdAt      DateTime     @default(now())
+  
+  // Relations
+  userIdentity   UserIdentity @relation(fields: [userIdentityId], references: [id], onDelete: Cascade)
+
+  @@index([userIdentityId])
+  @@index([date])
+  @@index([userIdentityId, date])
 }
