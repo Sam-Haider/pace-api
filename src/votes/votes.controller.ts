@@ -2,13 +2,17 @@ import {
   Controller,
   Post,
   Get,
+  Put,
+  Delete,
   Body,
   Query,
+  Param,
   UseGuards,
   Req,
   BadRequestException,
   UnauthorizedException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VotesService } from './votes.service';
@@ -122,5 +126,61 @@ export class VotesController {
     });
 
     return votes;
+  }
+
+  @Put(':id')
+  async updateVote(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: {
+      date?: string;
+      notes?: string;
+    },
+  ) {
+    const voteId = parseInt(id);
+    if (isNaN(voteId)) {
+      throw new BadRequestException('Vote ID must be a number');
+    }
+
+    const updateData: any = {};
+    
+    if (body.date !== undefined) {
+      const date = new Date(body.date);
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid date format');
+      }
+      updateData.date = date;
+    }
+
+    if (body.notes !== undefined) {
+      updateData.notes = body.notes;
+    }
+
+    const result = await this.votesService.updateVote(voteId, req.user.userId, updateData);
+
+    if (!result) {
+      throw new NotFoundException('Vote not found or you do not have permission to edit it');
+    }
+
+    return result;
+  }
+
+  @Delete(':id')
+  async deleteVote(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    const voteId = parseInt(id);
+    if (isNaN(voteId)) {
+      throw new BadRequestException('Vote ID must be a number');
+    }
+
+    const result = await this.votesService.deleteVote(voteId, req.user.userId);
+
+    if (!result) {
+      throw new NotFoundException('Vote not found or you do not have permission to delete it');
+    }
+
+    return result;
   }
 }

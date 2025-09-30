@@ -76,6 +76,64 @@ export class VotesService {
     });
   }
 
+  async updateVote(voteId: number, userId: number, data: {
+    date?: Date;
+    notes?: string;
+  }) {
+    // First verify the vote exists and belongs to user
+    const vote = await this.prisma.vote.findFirst({
+      where: {
+        id: voteId,
+        userIdentity: {
+          userId: userId,
+        },
+      },
+    });
+
+    if (!vote) {
+      return null;
+    }
+
+    const updatedVote = await this.prisma.vote.update({
+      where: { id: voteId },
+      data,
+    });
+
+    const stats = await this.calculateStats(vote.userIdentityId);
+
+    return {
+      vote: updatedVote,
+      stats,
+    };
+  }
+
+  async deleteVote(voteId: number, userId: number) {
+    // First verify the vote exists and belongs to user
+    const vote = await this.prisma.vote.findFirst({
+      where: {
+        id: voteId,
+        userIdentity: {
+          userId: userId,
+        },
+      },
+    });
+
+    if (!vote) {
+      return null;
+    }
+
+    await this.prisma.vote.delete({
+      where: { id: voteId },
+    });
+
+    const stats = await this.calculateStats(vote.userIdentityId);
+
+    return {
+      deletedVoteId: voteId,
+      stats,
+    };
+  }
+
   private async calculateStats(userIdentityId: number) {
     // Total votes
     const totalVotes = await this.prisma.vote.count({
