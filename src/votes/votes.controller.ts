@@ -35,7 +35,7 @@ export class VotesController {
 
     // If no userIdentityId provided, use primary identity
     if (!userIdentityId) {
-      const primaryIdentityId = await this.votesService.getUserPrimaryIdentity(req.user.userId);
+      const primaryIdentityId = await this.votesService.getUserPrimaryIdentity(req.user.id);
       if (!primaryIdentityId) {
         throw new BadRequestException('No primary identity found. Please complete onboarding first.');
       }
@@ -44,7 +44,7 @@ export class VotesController {
 
     // Verify user owns the userIdentityId
     const userOwnsIdentity = await this.votesService.verifyUserOwnsIdentity(
-      req.user.userId,
+      req.user.id,
       userIdentityId,
     );
 
@@ -80,7 +80,7 @@ export class VotesController {
 
     // If no userIdentityId provided, use primary identity
     if (!query.userIdentityId) {
-      const primaryIdentityId = await this.votesService.getUserPrimaryIdentity(req.user.userId);
+      const primaryIdentityId = await this.votesService.getUserPrimaryIdentity(req.user.id);
       if (!primaryIdentityId) {
         throw new BadRequestException('No primary identity found. Please complete onboarding first.');
       }
@@ -94,7 +94,7 @@ export class VotesController {
 
     // Verify user owns the userIdentityId
     const userOwnsIdentity = await this.votesService.verifyUserOwnsIdentity(
-      req.user.userId,
+      req.user.id,
       userIdentityId,
     );
 
@@ -156,7 +156,7 @@ export class VotesController {
       updateData.notes = body.notes;
     }
 
-    const result = await this.votesService.updateVote(voteId, req.user.userId, updateData);
+    const result = await this.votesService.updateVote(voteId, req.user.id, updateData);
 
     if (!result) {
       throw new NotFoundException('Vote not found or you do not have permission to edit it');
@@ -175,7 +175,7 @@ export class VotesController {
       throw new BadRequestException('Vote ID must be a number');
     }
 
-    const result = await this.votesService.deleteVote(voteId, req.user.userId);
+    const result = await this.votesService.deleteVote(voteId, req.user.id);
 
     if (!result) {
       throw new NotFoundException('Vote not found or you do not have permission to delete it');
