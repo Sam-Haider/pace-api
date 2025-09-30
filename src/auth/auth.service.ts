@@ -108,6 +108,32 @@ export class AuthService {
     });
   }
 
+  async getUserIdentities(userId: number) {
+    const userIdentities = await this.prisma.userIdentity.findMany({
+      where: { userId },
+      include: {
+        identity: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: [
+        { isPrimary: 'desc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
+    return userIdentities.map(ui => ({
+      userIdentityId: ui.id,
+      identityId: ui.identityId,
+      isPrimary: ui.isPrimary,
+      identity: ui.identity,
+    }));
+  }
+
   async completeOnboarding(userId: number, data: { firstName: string; lastName: string; identityId: number }) {
     // Update user with onboarding data
     const updatedUser = await this.prisma.user.update({

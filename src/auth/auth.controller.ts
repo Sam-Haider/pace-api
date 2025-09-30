@@ -205,4 +205,17 @@ export class AuthController {
 
     return { message: 'Onboarding completed successfully' };
   }
+
+  @Get('identities')
+  @UseGuards(JwtAuthGuard)
+  async getUserIdentities(@Req() req: any) {
+    const user = await this.authService.findUserByEmail(req.user.email);
+    
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const identities = await this.authService.getUserIdentities(user.id);
+    return identities;
+  }
 }
